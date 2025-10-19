@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "functions": {
+    "api/cancel.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/cancel",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "/api/cancel.js"
+    }
+  ]
+}
