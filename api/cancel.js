@@ -26,7 +26,7 @@ Steps: <1-3 sentences of instructions>
 `;
 
     // ✅ CHANGE THIS to use either your env var or a hardcoded key for now
-    const HF_API_KEY = process.env.HUGGINGFACE_API_KEY || "hf_YOUR_HARDCODED_KEY_HERE";
+    const HF_API_KEY = process.env.HUGGINGFACE_API_KEY || "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";
 
     const hfResponse = await fetch(
       "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
@@ -34,7 +34,7 @@ Steps: <1-3 sentences of instructions>
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: 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,
+          Authorization: `Bearer ${HF_API_KEY}`,
         },
         body: JSON.stringify({ inputs: prompt }),
       }
