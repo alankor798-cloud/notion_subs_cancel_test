@@ -4,29 +4,32 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    // If Notion sends text/plain, attempt to parse safely.
+    // Safely parse body
     let body = req.body;
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch (_) {}
     }
 
-    const service = body?.service || body?.Service || body?.name || "";
+    const service = body?.service;
     if (!service) {
       return res.status(400).json({ error: "Missing 'service' in request body" });
     }
 
     const prompt = `
 You are an expert in subscription services.
-Return ONLY the official cancellation page URL and short steps for: "${service}".
+Provide the OFFICIAL cancellation link and short instructions for the service: "${service}".
 
-Format EXACTLY as:
+Format the response EXACTLY as:
+
 URL: <link>
-Steps: <1-3 sentences of concise, actionable instructions>
+Steps: <1-3 sentences of instructions>
 `;
 
-    // Call Hugging Face Inference API
+    // ✅ CHANGE THIS to use either your env var or a hardcoded key for now
+    const HF_API_KEY = process.env.HUGGINGFACE_API_KEY || "hf_YOUR_HARDCODED_KEY_HERE";
+
     const hfResponse = await fetch(
-      "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
+      "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
       {
         method: "POST",
         headers: {
@@ -37,40 +40,51 @@ Steps: <1-3 sentences of concise, actionable instructions>
       }
     );
 
+    const raw = await hfResponse.text();
+    console.log("🔍 Hugging Face raw response:", raw);
+
     if (!hfResponse.ok) {
-      const errorText = await hfResponse.text();
-      return res.status(502).json({ error: `Hugging Face API error: ${errorText}` });
+      return res.status(500).json({
+        error: "Hugging Face API error",
+        raw
+      });
     }
 
-    const data = await hfResponse.json();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (err) {
+      // Model might return plain text instead of JSON
+      data = raw;
+    }
 
     let textResponse = "";
-    if (Array.isArray(data)) {
-      textResponse = data[0]?.generated_text || "";
-    } else if (data?.generated_text) {
-      textResponse = data.generated_text;
+
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      textResponse = data[0].generated_text;
     } else if (typeof data === "string") {
       textResponse = data;
+    } else if (data?.generated_text) {
+      textResponse = data.generated_text;
+    } else {
+      return res.status(500).json({
+        error: "Unrecognized response format from Hugging Face",
+        raw: data
+      });
     }
 
-    // Parse lines like:
-    //  URL: https://...
-    //  Steps: ...
+    // Parse the result
     const urlMatch = textResponse.match(/URL:\s*<?(https?:\/\/[^\s>]+)>?/i);
     const stepsMatch = textResponse.match(/Steps:\s*([\s\S]+)/i);
 
     const url = urlMatch?.[1]?.trim() || "";
     let steps = stepsMatch?.[1]?.trim() || "";
-    // Compact steps to a single short paragraph
     steps = steps.replace(/\n+/g, " ").slice(0, 600);
 
     if (!url || !steps) {
-      // Friendly fallback so Notion can still write something useful
       return res.status(200).json({
         "Cancellation Link": "",
-        "How to Cancel":
-          `Couldn’t auto-detect a confirmed official link for "${service}". ` +
-          `Try searching the official support/help center or account settings, then paste the link here.`,
+        "How to Cancel": `Could not extract a proper link or instructions for "${service}". Check the raw response.`,
         _debug_raw: textResponse
       });
     }
@@ -79,7 +93,6 @@ Steps: <1-3 sentences of concise, actionable instructions>
       "Cancellation Link": url,
       "How to Cancel": steps
     });
-
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
