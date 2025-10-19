@@ -19,14 +19,10 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "user",
-          content: `Service name: ${service}. You are an assistant that finds official subscription cancellation links and step-by-step instructions.
-Your task:
-1. Search the web for accurate and up-to-date information.
-2. Identify the official cancellation link for the service.
-3. Provide clear, step-by-step cancellation instructions.`
+          content: `Service name: ${service}. You are an assistant that returns ONLY a strict JSON object with fields:\n- \"service\": string\n- \"cancellation_link\": string | null\n- \"instructions\": string\n\nRules:\n- Do NOT say you searched the web. You have NO browsing tools.\n- If you are not highly confident about the official link, set the most likely link option as \"cancellation_link\" and give concise \"instructions\" you are confident about. Do not make up instructions - rely on the search results.\n- Prefer links on the service's own domain (e.g., netflix.com, help.netflix.com). Avoid third-party blogs.\n- Keep \"instructions\" brief (3–5 steps), current as of today, and avoid region-specific details unless universally applicable.\n- Output ONLY the JSON object, with NO extra text, NO markdown."`
         }
       ],
-      model: "openai/gpt-oss-20b",
+      model: "Qwen/Qwen3-Next-80B-A3B-Instruct",
       stream: false
     };
 
