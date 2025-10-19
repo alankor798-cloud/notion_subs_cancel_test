@@ -44,24 +44,35 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✅ 5. Parse the HF response (model might return a string or object)
+    // ✅ 5. Parse the HF response safely
     const result = await response.json();
 
+    let content;
+
+    // Case 1: Hugging Face returns OpenAI-format with choices[]
+    if (result.choices && result.choices[0]?.message?.content) {
+      content = result.choices[0].message.content;
+    } else {
+      // Case 2: Raw JSON/object/string fallback
+      content = result;
+    }
+
     let data;
-    if (typeof result === "string") {
+    if (typeof content === "string") {
       try {
-        data = JSON.parse(result);
-      } catch {
+        data = JSON.parse(content);
+      } catch (err) {
         return res.status(500).json({
           error: "Model returned invalid JSON string",
-          raw: result,
+          raw: content,
         });
       }
     } else {
-      data = result;
+      data = content;
     }
 
     const { service: svc, cancellation_link, instructions } = data;
+
     if (!cancellation_link || !instructions) {
       return res.status(500).json({
         error: "The model did not return the required fields",
