@@ -9,6 +9,7 @@
   "routes": [
     {
       "src": "/api/cancel",
+      "methods": ["POST", "OPTIONS"],
       "dest": "/api/cancel.js"
     }
   ]
