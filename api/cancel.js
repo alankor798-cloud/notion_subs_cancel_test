@@ -31,7 +31,7 @@ Steps: <1-3 sentences of concise, actionable instructions>
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+          Authorization: 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,
         },
         body: JSON.stringify({ inputs: prompt }),
       }
