@@ -26,7 +26,7 @@ Steps: <1-3 sentences of concise, actionable instructions>
 
     // Call Hugging Face Inference API
     const hfResponse = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+      "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
       {
         method: "POST",
         headers: {
