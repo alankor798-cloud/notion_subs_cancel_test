@@ -19,7 +19,19 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "user",
-          content: `Service name: ${service}. Return ONLY a JSON object with three fields: 'service', 'cancellation_link', and 'instructions'. The 'cancellation_link' should be the official page where users can cancel their subscription. The 'instructions' should briefly describe how to cancel the subscription as of today. Do not include additional commentary.`
+          content: `Service name: ${service}. You are an assistant that finds official subscription cancellation links and step-by-step instructions.
+
+Your task:
+1. Search the web for accurate and up-to-date information.
+2. Identify the official cancellation link for the service.
+3. Provide clear, step-by-step cancellation instructions.
+
+Return the answer strictly in this JSON format:
+{
+  "service": "<SERVICE_NAME>",
+  "cancellation_link": "<official URL or null>",
+  "instructions": "<detailed step-by-step guide>"
+}`
         }
       ],
       model: "openai/gpt-oss-20b",
